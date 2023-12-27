@@ -1,0 +1,41 @@
+name: Deploy to ArgoCD
+
+on:
+  push:
+    branches:
+      - 'development'
+      - 'master'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.11
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v0.5.0
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCR_KEY }}
+          export_default_credentials: true
+
+      - name: Build and Push Docker Image
+        run: |
+          docker build -t gcr.io/waficash-gke/wafi-app:${{ github.sha }} .
+          docker push gcr.io/waficash-gke/wafi-app:${{ github.sha }}
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GCR_KEY }}
+          
+
+      - name: Deploy to ArgoCD
+        run: |
+          kubectl apply -n argocd -f argocd-app.yaml
+        env:
+          KUBECONFIG: ${{ secrets.KUBE_CONFIG }}
