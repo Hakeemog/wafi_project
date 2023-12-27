@@ -1,0 +1,32 @@
+name: Deploy to ArgoCD
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.11
+
+      - name: Build and Push Docker Image
+        run: |
+          docker build -t gcr.io/waficash-gke/wafi-app:${{ github.sha }} .
+          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+          docker push gcr.io/waficash-gke/wafi-app:${{ github.sha }}
+          
+
+      - name: Deploy to ArgoCD
+        run: |
+          kubectl apply -n argocd -f argocd-app.yaml
+        env:
+          KUBECONFIG: ${{ secrets.KUBE_CONFIG }}
