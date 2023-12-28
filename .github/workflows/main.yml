@@ -31,7 +31,7 @@ jobs:
           sudo docker build -t gcr.io/waficash-gke/wafi-app:${{ github.sha }} .
           sudo docker push gcr.io/waficash-gke/wafi-app:${{ github.sha }}
         env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GCR_KEY }}
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GAC_KEY }}
           
 
       - name: Deploy to ArgoCD
